@@ -1,52 +1,31 @@
 name: Deploy
-
 on:
   push:
     branches: ["main"]
-
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-          run_install: false
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build project
-        run: pnpm build 
-
-      - name: Prepare output directory
-        run: |
-          rm -rf output
-          mkdir -p output
-          cp -R dist/* output/
+      - name: creates output
+        run: sh ./build.sh
 
       - name: Push to forked repository
         id: push_directory
         uses: cpina/github-action-push-to-another-repository@main
+
         env:
           API_TOKEN_GITHUB: ${{ secrets.AUTO_ACTIONS }}
+
         with:
           source-directory: "output"
           destination-github-username: "hummingbbird"
-          destination-repository-name: "37-COLLABORATION-WEB-EVERYTIME"
+          destination-repository-name: "deploy_test"
           user-email: ${{ secrets.EMAIL }}
-          commit-message: ${{ github.event.head_commit.message }}
+          commit-message: ${{ github.event.commits.message }}
           target-branch: main
 
-      - name: Test cloned directory
-        run: echo "$DESTINATION_CLONED_DIRECTORY"
+      - name: Test cloned repository
+        run: echo $DESTINATION_CLONED_DIRECTORY
